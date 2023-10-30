@@ -1,0 +1,14 @@
+package Maven_Project.Project;
+
+/**
+ * Hello world!
+ *
+ */
+public class App 
+{
+    public static void main( String[] args )
+    {
+    	String cwd = System.getProperty("user.dir");
+    	System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+    }
+}

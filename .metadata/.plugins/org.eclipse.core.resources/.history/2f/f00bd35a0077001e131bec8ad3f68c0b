@@ -1,0 +1,25 @@
+package Maven_Project.Project;
+
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+
+/**
+ * Hello world!
+ *
+ */
+public class App 
+{
+    public static void main( String[] args )
+    {
+    	String cwd = System.getProperty("user.dir") + "/src/main/java/Maven_Project/doc/webdriver/chromedriver.exe";
+    	System.setProperty("webdriver.chrome.driver", cwd);
+    	WebDriver driver = new ChromeDriver();;
+    	driver.get("https://testpages.herokuapp.com/styled/tag/dynamic-table.html");
+    	driver.manage().window().maximize();
+    	
+    	WebElement tableDataButton = driver.findElement(By.id("populate"));
+        tableDataButton.click();
+    }
+}

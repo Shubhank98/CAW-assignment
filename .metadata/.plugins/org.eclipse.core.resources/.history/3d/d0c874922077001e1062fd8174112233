@@ -1,0 +1,134 @@
+package Maven_Project.Project;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+/**
+ * Hello world!
+ *
+ */
+public class App 
+{
+    WebDriver driver;
+    String docPath;
+
+    @BeforeTest
+    public void setup() {
+        // Set up WebDriver
+    	String cwd = System.getProperty("user.dir") + "/src/main/java/Maven_Project/doc/webdriver/chromedriver";
+    	docPath =  System.getProperty("user.dir") + "/src/main/java/Maven_Project/doc";
+        System.setProperty("webdriver.chrome.driver", cwd);
+        driver = new ChromeDriver();
+        driver.get("https://testpages.herokuapp.com/styled/tag/dynamic-table.html");
+        driver.manage().window().maximize();
+    }
+
+    @Test
+    public void testDynamicTable() {
+        // Step 2: Click on Table Data button
+        WebElement tableDataButton = driver.findElement(By.xpath("//summary[text()='Table Data']"));
+        tableDataButton.click();
+        
+        WebElement textbox = driver.findElement(By.id("jsondata"));
+        textbox.clear();
+
+        // Step 3: Insert data in the input text box and click Refresh Table button
+        String jsonContent = null;
+        try {
+			jsonContent = new String(Files.readAllBytes(Paths.get(docPath+"/InputData.json")));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+        textbox.sendKeys(jsonContent);
+
+        WebElement refreshButton = driver.findElement(By.id("refreshtable"));
+        refreshButton.click();
+
+        // Step 4: Wait for the table to load
+        WebElement table = driver.findElement(By.id("dynamictable"));
+        int tableSize = table.findElements(By.xpath("//tr")).size();
+        List<WebElement> tablehead = table.findElements(By.xpath("//tr//th"));
+        ArrayList<String> headkeys = new ArrayList<String>();
+
+        // Step 5: Assert the data in the table matches the entered data
+        for(WebElement header : tablehead) {
+        	headkeys.add(header.getText());
+        }
+        
+        ArrayList<HashMap> dataList = new ArrayList<HashMap>();
+        
+        for(int i=2; i<=tableSize;i++) {
+        	List<WebElement> tablerow = table.findElements(By.xpath("//tr["+i+"]//td"));
+        	int index= 0;
+            HashMap data = new HashMap();
+        	for(WebElement text : tablerow) {
+        		if(text.getText().matches("-?\\d+"))
+        			data.put(headkeys.get(index), Integer.parseInt(text.getText()));
+        		else
+        			data.put(headkeys.get(index), text.getText());
+        		index = index+1;
+        	}
+        	dataList.add(data);
+        }
+        
+        
+        ObjectMapper objectMapper1 = new ObjectMapper();
+
+        ArrayList personList = new ArrayList();
+        try {
+			personList = objectMapper1.readValue(jsonContent, new TypeReference<ArrayList>() {});
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        System.out.println(personList.get(0));
+        System.out.println(dataList.get(0));
+        
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node1 = mapper.readTree(personList.get(0));
+        JsonNode node2 = mapper.readTree(personList);
+
+        // Compare JSON objects without considering order
+        if (node1.equals(node2)) {
+            System.out.println("The JSON objects are equal.");
+        } else {
+            System.out.println("The JSON objects are not equal.");
+        }
+        
+//        Assert.assertTrue(tableText.contains("Bob") && tableText.contains("20") && tableText.contains("male"));
+//        Assert.assertTrue(tableText.contains("George") && tableText.contains("42") && tableText.contains("male"));
+//        Assert.assertTrue(tableText.contains("Sara") && tableText.contains("42") && tableText.contains("female"));
+//        Assert.assertTrue(tableText.contains("Conor") && tableText.contains("40") && tableText.contains("male"));
+//        Assert.assertTrue(tableText.contains("Jennifer") && tableText.contains("42") && tableText.contains("female"));
+    }
+
+    @AfterTest
+    public void tearDown() {
+        // Close the browser
+        driver.quit();
+    }
+}
